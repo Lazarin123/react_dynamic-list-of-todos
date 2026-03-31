@@ -24,29 +24,9 @@ type TodoContextType = {
   handleSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
-export const todoContext = React.createContext<TodoContextType>({
-  loadTodos: () => {},
-  todos: [],
-  selectedFilter: 'all',
-  setSelectedFilter: () => {},
-  visibleTodos: [],
-  modalOpen: false,
-  searchTitle: '',
-  setSearchTitle: () => {},
-  user: null,
-  userTodo: null,
-  hasError: false,
-  isLoading: true,
-  userError: false,
-  isUserLoading: false,
-  handleOpenUserModal: () => {},
-  handleCloseUserModal: () => {},
-  handleSearchChange: () => {},
-});
+export const todoContext = React.createContext<TodoContextType>({} as TodoContextType);
 
-export const TodoContextProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const TodoContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   const [modalOpen, setModalOpen] = useState(false);
@@ -75,7 +55,8 @@ export const TodoContextProvider: React.FC<{ children: React.ReactNode }> = ({
     setModalOpen(true);
     setIsUserLoading(true);
     setUserTodo(todo);
-    setUserError(false);
+    setUser(null); // Limpa o usuário anterior imediatamente
+    setUserError(false); // Reseta o erro anterior
 
     getUser(todo.userId)
       .then(setUser)
@@ -87,6 +68,7 @@ export const TodoContextProvider: React.FC<{ children: React.ReactNode }> = ({
     setModalOpen(false);
     setUser(null);
     setUserTodo(null);
+    setUserError(false);
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,6 +111,8 @@ export const TodoContextProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   return (
-    <todoContext.Provider value={contextValue}>{children}</todoContext.Provider>
+    <todoContext.Provider value={contextValue}>
+      {children}
+    </todoContext.Provider>
   );
 };
