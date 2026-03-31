@@ -44,7 +44,9 @@ export const todoContext = React.createContext<TodoContextType>({
   handleSearchChange: () => {},
 });
 
-export const TodoContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const TodoContextProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   const [modalOpen, setModalOpen] = useState(false);
@@ -127,8 +129,6 @@ export const TodoContextProvider: React.FC<{ children: React.ReactNode }> = ({ c
   };
 
   return (
-    <todoContext.Provider value={contextValue}>
-      {children}
-    </todoContext.Provider>
+    <todoContext.Provider value={contextValue}>{children}</todoContext.Provider>
   );
 };

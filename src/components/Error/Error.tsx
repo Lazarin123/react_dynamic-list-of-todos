@@ -8,11 +8,7 @@ export const Error: React.FC = () => {
     <div className="Error">
       <h2 className="title">An Error Has Occurred While Fetching Todos!</h2>
 
-      <button
-        type="button"
-        onClick={loadTodos}
-        className="button is-primary"
-      >
+      <button type="button" onClick={loadTodos} className="button is-primary">
         Try again
       </button>
     </div>

@@ -3,7 +3,8 @@ import cn from 'classnames';
 import { todoContext } from '../../contexts/TodoContext';
 
 export const TodoList: React.FC = () => {
-  const { visibleTodos, modalOpen, userTodo, handleOpenUserModal } = useContext(todoContext);
+  const { visibleTodos, modalOpen, userTodo, handleOpenUserModal } =
+    useContext(todoContext);
 
   return (
     <table className="table is-narrow is-fullwidth">
@@ -32,10 +33,12 @@ export const TodoList: React.FC = () => {
               )}
             </td>
             <td className="is-vcentered is-expanded">
-              <p className={cn({
-                'has-text-success': todo.completed,
-                'has-text-danger': !todo.completed,
-              })}>
+              <p
+                className={cn({
+                  'has-text-success': todo.completed,
+                  'has-text-danger': !todo.completed,
+                })}
+              >
                 {todo.title}
               </p>
             </td>
@@ -47,10 +50,12 @@ export const TodoList: React.FC = () => {
                 onClick={() => handleOpenUserModal(todo)}
               >
                 <span className="icon">
-                  <i className={cn('far', {
-                    'fa-eye-slash': modalOpen && userTodo?.id === todo.id,
-                    'fa-eye': !modalOpen || userTodo?.id !== todo.id,
-                  })} />
+                  <i
+                    className={cn('far', {
+                      'fa-eye-slash': modalOpen && userTodo?.id === todo.id,
+                      'fa-eye': !modalOpen || userTodo?.id !== todo.id,
+                    })}
+                  />
                 </span>
               </button>
             </td>
