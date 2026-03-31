@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback, useMemo, useState } from 'react';
 import { Todo } from '../types/Todo';
 import { User } from '../types/User';
 import { FilterType } from '../types/FilterType';
@@ -7,22 +7,16 @@ import { getTodos, getUser } from '../api';
 type TodoContextType = {
   loadTodos: () => void;
   todos: Todo[];
-  setTodos: React.Dispatch<React.SetStateAction<Todo[]>>;
   selectedFilter: FilterType;
-  setSelectedFilter: React.Dispatch<React.SetStateAction<FilterType>>;
+  setSelectedFilter: (filter: FilterType) => void;
   visibleTodos: Todo[];
   modalOpen: boolean;
-  setModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   searchTitle: string;
-  setSearchTitle: React.Dispatch<React.SetStateAction<string>>;
-  user: User;
-  setUser: React.Dispatch<React.SetStateAction<User>>;
-  userTodo: Todo;
+  setSearchTitle: (title: string) => void;
+  user: User | null;
+  userTodo: Todo | null;
   isLoading: boolean;
   hasError: boolean;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  setHasError: React.Dispatch<React.SetStateAction<boolean>>;
-  setUserTodo: React.Dispatch<React.SetStateAction<Todo>>;
   userError: boolean;
   isUserLoading: boolean;
   handleOpenUserModal: (todo: Todo) => void;
@@ -33,62 +27,38 @@ type TodoContextType = {
 export const todoContext = React.createContext<TodoContextType>({
   loadTodos: () => {},
   todos: [],
-  setTodos: () => {},
   selectedFilter: 'all',
   setSelectedFilter: () => {},
   visibleTodos: [],
   modalOpen: false,
-  setModalOpen: () => {},
   searchTitle: '',
   setSearchTitle: () => {},
-  user: {
-    id: 0,
-    name: '',
-    email: '',
-    phone: '',
-  },
-  setUser: () => {},
-  userTodo: {
-    userId: 0,
-    id: 0,
-    title: '',
-    completed: false,
-  },
-  setUserTodo: () => {},
+  user: null,
+  userTodo: null,
   hasError: false,
   isLoading: true,
-  setIsLoading: () => {},
-  setHasError: () => {},
   userError: false,
-  isUserLoading: true,
+  isUserLoading: false,
   handleOpenUserModal: () => {},
   handleCloseUserModal: () => {},
   handleSearchChange: () => {},
 });
 
-export const TodoContextProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  const [todos, setTodos] = React.useState<Todo[]>([]);
-  const [selectedFilter, setSelectedFilter] = React.useState<FilterType>('all');
-  const [modalOpen, setModalOpen] = React.useState<boolean>(false);
-  const [searchTitle, setSearchTitle] = React.useState<string>('');
-  const [userTodo, setUserTodo] = React.useState<Todo>({
-    userId: 0,
-    id: 0,
-    title: '',
-    completed: false,
-  });
-  const [user, setUser] = React.useState<User>({} as User);
-  const [isLoading, setIsLoading] = React.useState<boolean>(true);
-  const [isUserLoading, setIsUserLoading] = React.useState<boolean>(true);
-  const [hasError, setHasError] = React.useState<boolean>(false);
-  const [userError, setUserError] = React.useState<boolean>(false);
+export const TodoContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [searchTitle, setSearchTitle] = useState('');
+  const [userTodo, setUserTodo] = useState<Todo | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUserLoading, setIsUserLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [userError, setUserError] = useState(false);
 
-  const loadTodos = React.useCallback(() => {
+  const loadTodos = useCallback(() => {
     setIsLoading(true);
+    setHasError(false);
     getTodos()
       .then(setTodos)
       .catch(() => setHasError(true))
@@ -99,63 +69,56 @@ export const TodoContextProvider = ({
     loadTodos();
   }, [loadTodos]);
 
-  const filteredTodos = React.useMemo(() => {
-    const activeTodos = todos.filter(todo => todo.completed === false);
-    const completedTodos = todos.filter(todo => todo.completed === true);
-
-    switch (selectedFilter) {
-      case 'active':
-        return activeTodos;
-      case 'completed':
-        return completedTodos;
-      default:
-        return todos;
-    }
-  }, [todos, selectedFilter]);
-
   const handleOpenUserModal = (todo: Todo) => {
+    setModalOpen(true);
+    setIsUserLoading(true);
     setUserTodo(todo);
-    setUser({} as User);
+    setUserError(false);
+
     getUser(todo.userId)
       .then(setUser)
       .catch(() => setUserError(true))
       .finally(() => setIsUserLoading(false));
-    setModalOpen(true);
   };
 
   const handleCloseUserModal = () => {
     setModalOpen(false);
-    setUser({} as User);
+    setUser(null);
+    setUserTodo(null);
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTitle(event.target.value);
   };
 
-  const treatedSearch = searchTitle.toLowerCase().trim();
-  const visibleTodos = filteredTodos.filter(todo =>
-    todo.title.toLowerCase().includes(treatedSearch),
-  );
+  const visibleTodos = useMemo(() => {
+    const normalizedSearch = searchTitle.toLowerCase().trim();
+
+    return todos.filter(todo => {
+      const matchesFilter =
+        selectedFilter === 'all' ||
+        (selectedFilter === 'active' && !todo.completed) ||
+        (selectedFilter === 'completed' && todo.completed);
+
+      const matchesSearch = todo.title.toLowerCase().includes(normalizedSearch);
+
+      return matchesFilter && matchesSearch;
+    });
+  }, [todos, selectedFilter, searchTitle]);
 
   const contextValue = {
     loadTodos,
     todos,
-    setTodos,
     selectedFilter,
     setSelectedFilter,
     visibleTodos,
     modalOpen,
-    setModalOpen,
     searchTitle,
     setSearchTitle,
     user,
-    setUser,
     userTodo,
-    setUserTodo,
     isLoading,
     hasError,
-    setIsLoading,
-    setHasError,
     isUserLoading,
     userError,
     handleOpenUserModal,
@@ -164,6 +127,8 @@ export const TodoContextProvider = ({
   };
 
   return (
-    <todoContext.Provider value={contextValue}>{children}</todoContext.Provider>
+    <todoContext.Provider value={contextValue}>
+      {children}
+    </todoContext.Provider>
   );
 };
